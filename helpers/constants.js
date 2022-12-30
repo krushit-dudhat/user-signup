@@ -9,6 +9,9 @@ exports.envConst = {
   APP_HOST: process.env.APP_HOST || 'http://localhost',
   APP_PORT: process.env.APP_PORT || 3000,
   SECRET: process.env.SECRET || 'secret',
+  EMAIL_SECRET: process.env.EMAIL_SECRET || 'email_secret',
+  FORGOT_PASSWORD_SECRET: process.env.FORGOT_PASSWORD_SECRET || 'fp_secret',
   NODE_ENV: process.env.NODE_ENV || 'dev',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
+  BASE_URL: process.env.BASE_URL || 'http://localhost:4000',
 };
