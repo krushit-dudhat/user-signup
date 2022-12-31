@@ -7,6 +7,36 @@ const {
   encryptPassword
 } = require('../../helpers/index');
 const { login } = require('../auth/auth.controller');
+const path = require('path');
+const AWS = require('aws-sdk');
+const fs = require('fs');
+
+const uploadFile = async (
+  file,
+) => {
+  return new Promise((resolve, reject) => {
+    const s3 = new AWS.S3({
+      accessKeyId: process.env.AWS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS,
+      region: process.env.AWS_REGION,
+    });
+
+    let bucket = process.env.S3_BUCKET_NAME + "/profile";
+
+    let newFilename = file.filename;
+    const params = {
+      Bucket: bucket,
+      Key: newFilename,
+      Body: fs.createReadStream("uploads/" + file.filename),
+      ContentType: file.mimetype,
+      ACL: "public-read",
+    };
+    s3.upload(params, function (err, data) {
+      if (err) reject(err);
+      resolve(data);
+    });
+  });
+};
 
 const fetchUser = async (req, res, next) => {
   const { userId } = req.params;
@@ -36,7 +66,7 @@ const fetchUser = async (req, res, next) => {
     dob: user.dob,
     gender: user.gender,
   }
-  return successResponse(req, res, trimmedUser, 'User fetched successfully', 200);
+  return successResponse(req, res, { user: trimmedUser }, 'User fetched successfully', 200);
 }
 
 const updateUser = async (req, res, next) => {
@@ -53,7 +83,19 @@ const updateUser = async (req, res, next) => {
   console.log(req.file);
 
   if (req.file) {
-    userObj.image = req.file.path;
+    // try {
+    //   const file = await uploadFile(req.file);
+    //   userObj.image = file.Location;
+    //   fs.unlink('./uploads/' + req.file.filename, (err) => {
+    //     if (err) {
+    //       console.log(err);
+    //     }
+    //   })
+    // } catch (error) {
+    //   console.log(error)
+    //   return next(error);
+    // }
+    userObj.image = path.resolve(__dirname, '../..', req.file.filename);
   }
 
   let user;
@@ -68,6 +110,9 @@ const updateUser = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+  user = user.toObject();
+  delete user.password;
+  delete user.token;
   return successResponse(req, res, user, 'User updated successfully', 200);
 }
 
@@ -88,7 +133,24 @@ const changePassword = async (req, res, next) => {
       }).exec();
 
     req.body.email = user.email;
+
     await login(req, res, next);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+const logout = async (req, res, next) => {
+  let user;
+  try {
+    user = await findOneAndUpdate({
+      _id: req.user._id,
+    }, {
+      $set: {
+        token: null,
+      },
+    }).exec();
+    return successResponse(req, res, {}, 'User logged out successfully', 200);
   } catch (error) {
     return next(error);
   }
@@ -98,4 +160,5 @@ module.exports = {
   fetchUser,
   updateUser,
   changePassword,
+  logout,
 };

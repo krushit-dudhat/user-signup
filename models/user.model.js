@@ -31,7 +31,10 @@ const userSchema = new mongoose.Schema({
   isArchived: {
     type: Boolean,
     default: false,
-  }
+  },
+  token: {
+    type: String,
+  },
 }, {
   timestamps: true,
   versionKey: false,

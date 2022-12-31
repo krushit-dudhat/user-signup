@@ -48,6 +48,7 @@ const loginSchema = {
 const signupValidator = async (req, res, next) => {
   const validate = ajv.compile(signupSchema);
   const valid = validate(req.body);
+  console.log(valid);
   if (!valid) {
     return errorResponse(req, res, validate.errors, 400);
   }
@@ -58,7 +59,7 @@ const loginValidator = async (req, res, next) => {
   const validate = ajv.compile(loginSchema);
   const valid = validate(req.body);
   if (!valid) {
-    return errorResponse(req, res, validate.errors, 400);
+    return errorResponse(req, res, "validation error", 400);
   }
   next();
 }

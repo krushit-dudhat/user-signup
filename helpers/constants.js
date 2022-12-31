@@ -14,4 +14,5 @@ exports.envConst = {
   NODE_ENV: process.env.NODE_ENV || 'dev',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
   BASE_URL: process.env.BASE_URL || 'http://localhost:4000',
+  FRONT_URL: process.env.FRONT_END_URL || 'http://localhost:3000',
 };

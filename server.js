@@ -15,7 +15,6 @@ process.on('uncaughtException', (uncaughtExc) => {
 process.on('unhandledRejection', (err) => {
   console.error(chalk.bgRed('UNHANDLED PROMISE REJECTION! 💥 Shutting down...'));
   console.error(err.name, err.message);
-  console.log(err);
   server.close(() => {
     process.exit(1);
   });

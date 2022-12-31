@@ -5,7 +5,7 @@ const path = require('path');
 
 const router = express.Router();
 
-const { fetchUser, forgotPassword, updateUser } = require('../controller/users/user.controller');
+const { fetchUser,   changePassword, updateUser, logout } = require('../controller/users/user.controller');
 const { updateUserValidator } = require('../controller/users/user.validator');
 const { authorization } = require('../middleware/jwt');
 
@@ -35,7 +35,9 @@ const upload = multer({
   }
 });
 
+router.put('/user/change-password', authorization, changePassword);
 router.get('/user/:userId', authorization, fetchUser);
 router.put('/user/:userId', authorization, upload.single('profile'), updateUserValidator, updateUser);
+router.get('/user/logout', authorization, logout);
 
 module.exports = router;

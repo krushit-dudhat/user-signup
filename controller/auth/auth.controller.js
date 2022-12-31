@@ -43,7 +43,7 @@ const signup = async (req, res, next) => {
     sendEmail({
       email: email,
       subject: 'Email verification',
-      html: `Please click on the link to verify your email <a href="${envConst.BASE_URL}/verify-email?token=${token}">Verify Email</a>`,
+      html: `Please click on the link to verify your email <a href="${envConst.FRONT_URL}/verify-email?token=${token}">Verify Email</a>`,
     });
   } catch (error) {
     return next(error);
@@ -67,7 +67,12 @@ const signup = async (req, res, next) => {
 const verifyEmail = async (req, res, next) => {
   const { token } = req.query;
   try {
-    const decoded = jwt.verify(token, envConst.EMAIL_SECRET);
+    let decoded;
+    try {
+    decoded = jwt.verify(token, envConst.EMAIL_SECRET);
+    } catch (error) {
+      return next(error);
+    }
     console.log(decoded);
     if (decoded) {
       console.log(decoded);
@@ -96,7 +101,14 @@ const verifyEmail = async (req, res, next) => {
         isArchived: user.isArchived,
       }
       const token = generateJWTtoken(trimmedUser);
-      return successResponse(req, res, { token }, 'User verified successfully', 200);
+      userModel.findOneAndUpdate({
+        _id: user._id,
+      }, {
+        $set: {
+          token,
+        }
+      });
+      return successResponse(req, res, { token, user: trimmedUser }, 'User verified successfully', 200);
     } else {
       return errorResponse(req, res, 'Invalid token', 400);
     }
@@ -124,7 +136,17 @@ const login = async (req, res, next) => {
     return errorResponse(req, res, 'Invalid credentials', 400);
   }
   if (!user.isEmailVerified) {
-    return errorResponse(req, res, 'Please verify your email', 400);
+    try {
+      const token = jwt.sign({ _id: user._id }, envConst.EMAIL_SECRET, { expiresIn: '10m' });
+      sendEmail({
+        email: email,
+        subject: 'Email verification',
+        html: `Please click on the link to verify your email <a href="${envConst.FRONT_URL}/verify-email?token=${token}">Verify Email</a>`,
+      });
+    } catch (error) {
+      return next(error);
+    }
+    return successResponse(req, res, {}, 'Please verify Email first', 200);
   }
 
   const trimmedUser = {
@@ -140,7 +162,15 @@ const login = async (req, res, next) => {
     const token = generateJWTtoken(trimmedUser);
     trimmedUser.image = user.image;
     trimmedUser.dob = user.dob;
-    return successResponse(req, res, { token, trimmedUser }, 'User logged in successfully', 200);
+
+    userModel.findOneAndUpdate({
+      _id: user._id,
+    }, {
+      $set: {
+        token,
+      }
+    });
+    return successResponse(req, res, { token, user: trimmedUser }, 'User logged in successfully', 200);
   } catch (error) {
     return next(error);
   }
@@ -178,7 +208,7 @@ const forgotPassword = async (req, res, next) => {
     sendEmail({
       email: user.email,
       subject: 'Password change request',
-      html: `Please click on the link to change password <a href="${envConst.BASE_URL}/${id}/reset-password/${token}">change password</a>`,
+      html: `Please click on the link to change password <a href="${envConst.FRONT_URL}/${user._id}/reset-password?forgotToken=${token}">change password</a>`,
     });
 
     return successResponse(req, res, { trimmedUser }, 'Password change email send successfully', 200);

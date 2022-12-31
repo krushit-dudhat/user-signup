@@ -6,13 +6,17 @@ const {
 } = require('../helpers/index');
 
 const authorization = async (req, res, next) => {
-  console.log('req.headers.authorization', req.headers.authorization);
-  const token = req.headers.authorization;
+  let token;
+  if (req.query.forgotToken) {
+    token = req.query.forgotToken;
+  } else {
+    token = req.headers.authorization;
+  }
   if (!token) {
     return errorResponse(req, res, 'Authorization token not found', 401);
   }
   try {
-    const decoded = jwt.verify(token, envConst.SECRET);
+    const decoded = jwt.verify(token, req.headers.authorization ? envConst.SECRET : envConst.FORGOT_PASSWORD_SECRET);
     if (!decoded) {
       return errorResponse(req, res, 'Invalid token', 401);
     }
